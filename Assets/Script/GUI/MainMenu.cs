@@ -3,46 +3,83 @@ using UnityEngine;
 using System.IO;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using System.Linq;
+using System;
 
 public class MainMenu : MonoBehaviour, iMenu
 {
+    private Vector2 origin;
+    public Text HighScoreText;
+    public GameObject Canvas;
 
+    void Awake()
+    {
+        origin = new Vector2(Screen.width / 2, Screen.height / 2);
+    }
+    internal void TurnOffMenu()
+    {
+        Canvas.SetActive(false);
+    }
+    internal void TurnOnMenu()
+    {
+        Canvas.SetActive(true);
+    }
     public void ShowHighScore()
     {
-        if (File.Exists(Settings.Instance.HighScoreFilePath))
+        foreach (Transform child in Canvas.transform)  //Deactivates every button while activating the return one.
+        {
+            if (child.tag != "Button")
+                continue;
+            if (child.name == "Return to Menu")
+                child.gameObject.SetActive(true);
+            else
+            child.gameObject.SetActive(false);
+        }
+        HighScoreText.text = "No high scores have yet been recorded";
+        if (!File.Exists(Settings.Instance.HighScoreFilePath))
             return;
         SortedDictionary<int, string> LoadHighScore = LevelManager.LoadHighScore();
+        HighScoreText.gameObject.transform.position = origin;
+        HighScoreText.fontSize = 24; 
+
         for (int i = 0; i < LoadHighScore.Count; i++)
         {
-
+            var hsItem = LoadHighScore.ElementAt(i);
+            HighScoreText.text += "Name: " + hsItem.Key + "       Score: " + hsItem.Value + "\n"; 
         }
-
     }
-
+    public void ReturnToMenu()
+    {
+        HighScoreText.text = "";
+        foreach (Transform child in Canvas.transform)  //Deactivates every button while activating the return one.
+        {
+            if (child.name == "Return to Menu")
+                child.gameObject.SetActive(false);
+            else
+                child.gameObject.SetActive(true);
+        }
+    }
+    public void NewGame()
+    {
+        SceneManager.LoadScene(1);
+    }
     public void LoadGame()
     {
+        if(PlayerPrefs.GetInt("Level") == 0)
+        {
+            Debug.Log("No Saved Games");
+            TurnOffMenu(); //Hacky fix for the "Load Game" button staying highlighted when there are no saved games. 
+            TurnOnMenu();
+            return;
+        }
         int level = PlayerPrefs.GetInt("Level");
         SceneManager.LoadScene(level);
+        RenderSettings.ambientLight = Color.white;
+
     }
     public void Exit()
     {
         Application.Quit();
-    }
-
-    void OnGUI()
-    {
-        Vector2 origin = new Vector2(Screen.width / 2, Screen.height / 2);
-        if (GUI.Button(new Rect(origin.x - Screen.width / 8, origin.y - Screen.height / 4, Screen.width / 4, Screen.height / 7), "Show High Score"))
-        {
-            ShowHighScore();
-        }
-        if (GUI.Button(new Rect(origin.x - Screen.width / 8, origin.y - Screen.height / 4 + Screen.height / 5, Screen.width / 4, Screen.height / 7), "Load Game"))
-        {
-            LoadGame();
-        }
-        if (GUI.Button(new Rect(origin.x - Screen.width / 8, origin.y - Screen.height / 4 + Screen.height / 2.5f, Screen.width / 4, Screen.height / 7), "Exit"))
-        {
-            Exit();
-        }
     }
 }

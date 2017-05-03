@@ -11,7 +11,7 @@ public class Settings : Singleton<Settings>
     public Vector2 TileSize = new Vector2(1, 1);
     public LayerMask UnpassableLayer;
 
-    public string HighScoreFilePath = Application.persistentDataPath + "HighScore.txt";
+    public string HighScoreFilePath = "HighScore.txt";
 
     public int Level;
 
@@ -21,6 +21,7 @@ public class Settings : Singleton<Settings>
 
     void Awake()
     {
+        HighScoreFilePath = Application.persistentDataPath + "/" + HighScoreFilePath;
         // Your initialization code here
     }
 

@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// Hjälpklass för A*
 /// </summary>
-class Node
+public class Node
 {
     #region Declarations
     private const int StraightLineCost = 10;
@@ -28,6 +28,9 @@ class Node
     public NodeState State { get; set; }
 
     public bool Walkable { get; set; }
+
+    public Vector3 WorldPos { get; set; }
+
     #endregion
     #region Properties
     //Positionen i förhållande till andra tiles
@@ -73,9 +76,15 @@ class Node
 
     #endregion
     #region Constructor
-    public Node(bool walkable, Vector3 origin, Vector2 gridLoc, int movementpenalty)
+    public Node(bool walkable, Vector3 worldPos, Vector2 gridLoc, int movementpenalty)
     {
+        Walkable = walkable;
+        WorldPos = worldPos;
+        LocationInGrid = gridLoc;
+    }
 
+    public Node()
+    {
     }
     #endregion
 }

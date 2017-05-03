@@ -19,6 +19,9 @@ static public class MonoBehaviourExtended
     }
 
 }
+/// <summary>
+/// Sorts values by descending 
+/// </summary>
 public sealed class DescendingComparer<T> : IComparer<T> where T : IComparable<T>
 {
     public int Compare(T x, T y)
