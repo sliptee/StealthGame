@@ -27,7 +27,7 @@ public class MainMenu : MonoBehaviour, iMenu
     }
     public void ShowHighScore()
     {
-        foreach (Transform child in Canvas.transform)  //Deactivates every button while activating the return one.
+        foreach (Transform child in Canvas.transform)  //Avaktiverar alla aktiva knappar och aktiverar tillbaka-knappen. 
         {
             if (child.tag != "Button")
                 continue;
@@ -52,7 +52,7 @@ public class MainMenu : MonoBehaviour, iMenu
     public void ReturnToMenu()
     {
         HighScoreText.text = "";
-        foreach (Transform child in Canvas.transform)  //Deactivates every button while activating the return one.
+        foreach (Transform child in Canvas.transform)  //Avaktiverar tillbaka-knappen och aktivera alla andra
         {
             if (child.name == "Return to Menu")
                 child.gameObject.SetActive(false);
@@ -69,7 +69,7 @@ public class MainMenu : MonoBehaviour, iMenu
         if(PlayerPrefs.GetInt("Level") == 0)
         {
             Debug.Log("No Saved Games");
-            TurnOffMenu(); //Hacky fix for the "Load Game" button staying highlighted when there are no saved games. 
+            TurnOffMenu(); //"Hacky" fix för att "Load Game" knappen forsätter vara makrerad när inga sparningar hittas. 
             TurnOnMenu();
             return;
         }

@@ -4,6 +4,9 @@ using UnityEngine.SceneManagement;
 public class Menu : MainMenu
 {
     Camera main;
+    float escTimer = 0;
+    bool decreaseTimer;
+    public float EscTimer = 0.5f; //Ger en delay på hur ofta escape stänger av eller sätter på menyn. 
     void Start()
     {
         main = Camera.main;
@@ -17,12 +20,26 @@ public class Menu : MainMenu
         main.enabled = true;
         TurnOffMenu();
     }
-    public void Update()
+    void FixedUpdate()
     {
-        if (Input.GetButton("Cancel"))
+        if (Input.GetButton("Cancel") && escTimer <= 0)
         {
-            main.enabled = false;
-            TurnOnMenu();
+            if (main.enabled == true)
+            {
+                main.enabled = false;
+                TurnOnMenu();
+            }
+            else
+            {
+                main.enabled = true;
+                TurnOffMenu();
+            }
+            escTimer = EscTimer;
+            decreaseTimer = true;
         }
+        if (escTimer <= 0)
+            decreaseTimer = false;
+        if (decreaseTimer)
+            escTimer -= Time.deltaTime;
     }
 }

@@ -20,9 +20,6 @@ public class AStar : MonoBehaviour
 
     Node startNode;
     Node goalNode;
-    //Om vi öppnat mer än [detta talet] nodes, sluta sökningen där för att spara prestanda. Gör det sämsta möjliga scenariot betydligt bättre. 
-    public int MaxNumberOfOpenNodes = 35;
-
     #endregion
 
 
@@ -34,18 +31,19 @@ public class AStar : MonoBehaviour
         List<Vector2> path = new List<Vector2>();
         startNode = grid.PositionToNode(startPos);
         goalNode = grid.PositionToNode(goalPos);
-        Debug.Log(startNode.WorldPos);
-        Debug.Log(goalNode.WorldPos);
-        bool success = Search(startNode);
-        if (success) //Ifall vi hittar en väg leta upp de föräldrar vi satt till våran slutnode och returnera dem i en lista
+        if(startNode.Walkable && goalNode.Walkable)
         {
-            Node node = goalNode;
-            while (node.Parent != null)
+            bool success = Search(startNode);
+            if (success) //Ifall vi hittar en väg leta upp de föräldrar vi satt till våran slutnode och returnera dem i en lista
             {
-                path.Add(node.LocationInGrid);
-                node = node.Parent;
+                Node node = goalNode;
+                while (node.Parent != null)
+                {
+                    path.Add(node.LocationInGrid);
+                    node = node.Parent;
+                }
+                path.Reverse();
             }
-            path.Reverse();
         }
         return path;
     }
@@ -55,7 +53,7 @@ public class AStar : MonoBehaviour
     {
         currentNode.State = NodeState.Closed;
         if (currentNode != startNode)
-            OpenList.Remove(currentNode);
+            OpenList.Remove(currentNode); //Noden är en del av vägen 
 
         OpenList.InsertRange(OpenList.Count, FindAdjecentWalkableNodesCost(currentNode, goalNode.LocationInGrid));
 
@@ -65,9 +63,6 @@ public class AStar : MonoBehaviour
 
         foreach (Node nextNode in OpenList)
         {
-            if (OpenList.Count > MaxNumberOfOpenNodes)
-                return false;
-
             if (nextNode.LocationInGrid == goalNode.LocationInGrid) //Vi hittade målet. Returnera vägen. 
             {
                 return true;
@@ -85,14 +80,14 @@ public class AStar : MonoBehaviour
     private List<Node> FindAdjecentWalkableNodesCost(Node node, Vector2 goalTile)
     {
         List<Node> adjecentWalkable = new List<Node>();
-        List<Vector2> nextLocations = FindAdjecentNodes(node);
+        List<Node> nextLocations = FindAdjecentNodes(node);
 
-        foreach (Vector2 location in nextLocations)
+        foreach (Node locNode in nextLocations)
         {
-            int x = (int)location.x;
-            int y = (int)location.y;
+            int x = (int)locNode.LocationInGrid.x;
+            int y = (int)locNode.LocationInGrid.y;
 
-            if ((x < 0) || (x > (searchWidth - 1)) || (y < 0) || (y > (searchHeight - 1)))
+            if ((x < 0) || (Mathf.Abs(x) > (searchWidth - 1)) || (y < 0) || (Mathf.Abs(y) > (searchHeight - 1)))
                 continue;
             Node nextNode = grid.grid[x, y];
             if (!nextNode.Walkable)
@@ -127,69 +122,67 @@ public class AStar : MonoBehaviour
     }
 
     //Hittar Närliggande (vertikalt,diagonalt och horisontellt) Nodes vilka inte är väggar, gör även diagonalchecks mot väggar
-    private List<Vector2> FindAdjecentNodes(Node node)
+    private List<Node> FindAdjecentNodes(Node node)
     {
         bool upLeft = true;
         bool upRight = true;
         bool downLeft = true;
         bool downRight = true;
-        List<Vector2> adjecentNodes = new List<Vector2>();
+        List<Node> adjecentNodes = new List<Node>();
+        int X = (int)node.LocationInGrid.x;
+        int Y = (int)node.LocationInGrid.y;
+        //Kollar vilka av de närliggande nodsen tillåter diagonal rörelse
+        if (grid.IsUnpassable(X - 1, Y))
+        {
+            upRight = false;
+            downRight = false;
+        }
+        if (grid.IsUnpassable(X + 1, Y))
+        {
+            upLeft = false;
+            downLeft = false;
+        }
+        if (grid.IsUnpassable(X, Y - 1))
+        {
+            downLeft = false;
+            downRight = false;
+        }
+        if (grid.IsUnpassable(X, Y + 1))
+        {
+            upLeft = false;
+            upRight = false;
+        }
         for (int x = -1; x < 2; x++)
         {
             for (int y = -1; y < 2; y++)
             {
-                if (x == 0 && y == 0)
+                if (X + x > grid.WorldGridSize.x || y + Y > grid.WorldGridSize.y)
+                    continue; 
+                Node nextNode = grid.grid[X+x, Y+y];
+                if (node.LocationInGrid == nextNode.LocationInGrid)
                     continue;
 
-                int X = (int)node.LocationInGrid.x;
-                int Y = (int)node.LocationInGrid.y;
-
-                Node nextNode = new Node();
-                nextNode.LocationInGrid = new Vector2(X + x, Y + y);
-
-                //Kollar vilka av de närliggande nodsen tillåter diagonal rörelse
-                if (grid.IsUnpassable(X - 1, Y))
+                if ((X + x != X) && (Y + y != Y)) //Om den närligande noden ligger diagonalt ifrån denna. 
                 {
-                    upLeft = false;
-                    downLeft = false;
-                }
-                if (grid.IsUnpassable(X + 1, Y))
-                {
-                    upRight = false;
-                    downRight = false;
-                }
-                if (grid.IsUnpassable(X, Y - 1))
-                {
-                    upLeft = false;
-                    upRight = false;
-                }
-                if (grid.IsUnpassable(X, Y + 1))
-                {
-                    downLeft = false;
-                    downRight = false;
-                }
-
-                if ((x + x != x) && (y + y != y)) //Diagonal node hittad
-                {
-                    if (upLeft && nextNode.LocationInGrid.x < x)
-                        adjecentNodes.Add(nextNode.LocationInGrid);
+                    if (upLeft && nextNode.LocationInGrid.x > X && nextNode.LocationInGrid.y > Y)
+                        adjecentNodes.Add(nextNode);
                     else continue;
 
-                    if (upRight && nextNode.LocationInGrid.x > x)
-                        adjecentNodes.Add(nextNode.LocationInGrid);
+                    if (upRight && nextNode.LocationInGrid.x > X && nextNode.LocationInGrid.y > Y)
+                        adjecentNodes.Add(nextNode);
                     else continue;
 
-                    if (downLeft && nextNode.LocationInGrid.y < y)
-                        adjecentNodes.Add(nextNode.LocationInGrid);
+                    if (downLeft && nextNode.LocationInGrid.y < Y && nextNode.LocationInGrid.x < X)
+                        adjecentNodes.Add(nextNode);
                     else continue;
 
-                    if (downRight && nextNode.LocationInGrid.y > y)
-                        adjecentNodes.Add(nextNode.LocationInGrid);
+                    if (downRight && nextNode.LocationInGrid.y < Y && nextNode.LocationInGrid.x > X)
+                        adjecentNodes.Add(nextNode);
                     else continue;
                 }
-                else if (nextNode.LocationInGrid != node.LocationInGrid)
+                else
                 {
-                    adjecentNodes.Add(nextNode.LocationInGrid);
+                    adjecentNodes.Add(nextNode);
                 }
             }
         }

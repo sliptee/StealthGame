@@ -21,11 +21,10 @@ public class Settings : Singleton<Settings>
 
     void Awake()
     {
+        Reload();
         HighScoreFilePath = Application.persistentDataPath + "/" + HighScoreFilePath;
         // Your initialization code here
     }
-
-
 
     // (optional) allow runtime registration of global objects
     static public T RegisterComponent<T>() where T : Component

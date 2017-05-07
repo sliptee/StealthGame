@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Skapar en grid för A*. Mindre juteringar krävs ifall objectet denna script tillhör inte har koordinaterna 0,0. 
+/// </summary>
 public class GridManager : MonoBehaviour
 {
     #region Properties
@@ -15,45 +18,49 @@ public class GridManager : MonoBehaviour
     }
     public Node PositionToNode(Vector3 worldPos)
     {
-        float percentX = (worldPos.x + worldGridSize.x / 2) / worldGridSize.x;
-        float percentY = (worldPos.z + worldGridSize.y / 2) / worldGridSize.y;
-        percentX = Mathf.Clamp01(percentX);
-        percentY = Mathf.Clamp01(percentY);
+        //float percentX = (worldPos.x + WorldGridSize.x / 2) / WorldGridSize.x;
+        //float percentY = (worldPos.z + WorldGridSize.y / 2) / WorldGridSize.y;
+        //percentX = Mathf.Clamp01(percentX);
+        //percentY = Mathf.Clamp01(percentY);
 
-        int x = Mathf.RoundToInt((gridSize.x - 1) * percentX);
-        int y = Mathf.RoundToInt((gridSize.y - 1) * percentY);
-        return grid[x, y];
+        //int x = Mathf.RoundToInt((gridSize.x - 1) * percentX);
+        //int y = Mathf.RoundToInt((gridSize.y - 1) * percentY);
+        Vector2 gridLoc = ConvertToGridLoc(worldPos);
+        return grid[(int)gridLoc.x, (int)gridLoc.y];
     }
     private Vector2 gridSize
     {
-        get { return ConvertToGridLoc(worldGridSize); }
+        get { return ConvertToGridLoc(WorldGridSize); }
     }
 
     public bool IsUnpassable(int x, int y)
     {
-        return grid[x, y].Walkable;
+        return !grid[x, y].Walkable;
+    }
+    public bool IsUnpassable(Vector2 gridLoc)
+    {
+        return IsUnpassable((int)gridLoc.x, (int)gridLoc.y);
     }
     #endregion
-    [SerializeField]
-    private Vector2 worldGridSize;
+    public Vector2 WorldGridSize;
     private LayerMask walkableMask;
     public Node[,] grid;
     public List<Vector2> path;
 
-    void Update()
+    void Awake()
     {
         CreateGrid();
-        var a = GameObject.FindGameObjectWithTag("AStar").GetComponent<AStar>();
-        path = a.FindPath(new Vector3(5, 1, 5), new Vector3(0, 1, 0));
     }
+
     void Start()
     {
-
+        var a = GameObject.FindGameObjectWithTag("AStar").GetComponent<AStar>();
+        path = a.FindPath(new Vector3(1, 1,1), new Vector3(49, 49, 1));
     }
     void OnDrawGizmos()
     {
-        if (!Application.isPlaying) return; //Gets rid of null reference when game is stopped
-        Gizmos.DrawWireCube(transform.position, new Vector3(worldGridSize.x, 1, worldGridSize.y));
+        Gizmos.DrawWireCube(transform.position, new Vector3(WorldGridSize.x, 1, WorldGridSize.y));
+        if (!Application.isPlaying) return; //När spelet inte körs finns ingen grid.. 
 
         if(grid != null)
         {
@@ -75,7 +82,7 @@ public class GridManager : MonoBehaviour
     void CreateGrid()
     {
         grid = new Node[(int)gridSize.x, (int)gridSize.y];
-        Vector3 worldBottomLeft = transform.position - Vector3.right * worldGridSize.x / 2 - Vector3.forward * worldGridSize.y / 2; //Could make property
+        Vector3 worldBottomLeft = transform.position - Vector3.right * WorldGridSize.x / 2 - Vector3.forward * WorldGridSize.y / 2; 
 
         for (int x = 0; x < gridSize.x; x++)
         {
@@ -84,22 +91,7 @@ public class GridManager : MonoBehaviour
                 Vector3 middleOfNode = worldBottomLeft + Vector3.right * (Settings.Instance.TileSize.x * x + Settings.Instance.TileSize.x/2) + Vector3.forward * (y * Settings.Instance.TileSize.y + Settings.Instance.TileSize.y / 2);
                 bool walkable = !(Physics.CheckBox(middleOfNode, new Vector3(Settings.Instance.TileSize.x, 1, Settings.Instance.TileSize.y) /2, Quaternion.identity, Settings.Instance.UnpassableLayer));
 
-                int movementPenalty = 0;
-
-                Ray ray = new Ray(middleOfNode + Vector3.up * 50, Vector3.down);
-                RaycastHit hit;
-                //if (Physics.Raycast(ray, out hit, 100, walkableMask))
-                //{
-                //    walkableRegionsDictionary.TryGetValue(hit.collider.gameObject.layer, out movementPenalty);
-                //}
-
-                //if (!walkable)
-                //{
-                //    movementPenalty += obstacleProximityPenalty;
-                //}
-
-
-                grid[x, y] = new Node(walkable, middleOfNode, new Vector2(x,y), movementPenalty);
+                grid[x, y] = new Node(walkable, middleOfNode, new Vector2(x,y));
             }
         }
 

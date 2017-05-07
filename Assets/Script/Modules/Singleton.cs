@@ -76,4 +76,11 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     {
         applicationIsQuitting = true;
     }
+    /// <summary>
+    /// Ser till att singeltonen ej förstörs vid scenbyte.
+    /// </summary>
+    public void Reload() 
+    {
+        applicationIsQuitting = false;
+    }
 }

@@ -13,7 +13,7 @@ public class LevelManager : MonoBehaviour
         PlayerPrefs.SetInt("Level", Settings.Instance.Level);
     }
     /// <summary>
-    /// Saves the player score as a highscore in a text document with the directory []. Also sorts the list and removes superflous ones. 
+    /// Sparar spelarens rekord i en textfil med sökvägen [Settings.Instance.HighScoreFilePath]. Ser till att listan är sorterad och tar bort överflödiga rekord. 
     /// </summary>
     /// <param name="name"> Player name</param>
     public static void SaveHighScore(string name)
@@ -25,7 +25,7 @@ public class LevelManager : MonoBehaviour
             highScores.Remove(highScores.Last().Key);
         }
 
-        using (StreamWriter file = File.CreateText(Settings.Instance.HighScoreFilePath)) //Creates or overwrites a textfile. May not be the most performance-friendly method, though considering the small number of high scores it won't have a large impact.
+        using (StreamWriter file = File.CreateText(Settings.Instance.HighScoreFilePath)) //Skapar eller skriver över en textfil.or overwrites a textfile. Givet det låga antalet rekord krävs inte att ta hänsyn till prestanda. 
         {
             for (int i = 0; i < highScores.Count; i++)
             {
@@ -34,11 +34,11 @@ public class LevelManager : MonoBehaviour
         }
     }
     /// <summary>
-    /// Loads all high scores as a dictionary
+    /// Laddar alla highscores i en dictionary 
     /// </summary>
     public static SortedDictionary<int, string> LoadHighScore()
     {
-        if (!File.Exists(Settings.Instance.HighScoreFilePath))   //If no highscore has yet been created 
+        if (!File.Exists(Settings.Instance.HighScoreFilePath))   //Om inga rekord har blivit sparade
         {
             Debug.Log("No High Scores has yet been saved");
             return new SortedDictionary<int, string>();
@@ -48,10 +48,10 @@ public class LevelManager : MonoBehaviour
 
         for (int line = 0; line < highScoreList.Length; line++)
         {
-            string[] scoreName = highScoreList[line].Split('|'); //High Scores are saved in the following format: "name|score"
+            string[] scoreName = highScoreList[line].Split('|'); //Rekord sparas i formatet: "name|score"
             string name = scoreName[0].ToString();
             int score = Convert.ToInt32(scoreName[1]);
-            highScoreDict.Add(score, name);                     //Adds the score to the dictionary
+            highScoreDict.Add(score, name);                    
         }
         return highScoreDict;
     }

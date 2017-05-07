@@ -76,16 +76,13 @@ public class Node
 
     #endregion
     #region Constructor
-    public Node(bool walkable, Vector3 worldPos, Vector2 gridLoc, int movementpenalty)
+    public Node(bool walkable, Vector3 worldPos, Vector2 locationInGrid)
     {
         Walkable = walkable;
         WorldPos = worldPos;
-        LocationInGrid = gridLoc;
+        LocationInGrid = locationInGrid;
     }
 
-    public Node()
-    {
-    }
     #endregion
 }
 
