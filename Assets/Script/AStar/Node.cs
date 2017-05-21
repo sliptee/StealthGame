@@ -22,7 +22,7 @@ public class Node
     /// F =  beräkning av den totala distansen då denna punkten väljs (F = G + H) 
     /// </summary>
     public float F { get { return G + H; } }
-    public Node Parent { get { return parent; } set { parent = value; SetGValue(); } } //Vi har en förälder, därför vet vi nu också G värdet. 
+    public Node Parent { get { return parent; } set { parent = value; if(parent != null) SetGValue(); } } //Vi har en förälder, därför vet vi nu också G värdet. 
     private Node parent;
 
     public NodeState State { get; set; }
@@ -44,8 +44,8 @@ public class Node
         set
         {
             //Makes sure the location stays inside the bounds of the map
-            locationInGrid.x = Mathf.Clamp(value.x, 0, Settings.Instance.SearchWidth);
-            locationInGrid.y = Mathf.Clamp(value.y, 0, Settings.Instance.SearchHeight);
+            locationInGrid.x = Mathf.Clamp(value.x, 0, GridManager.GridSize.x);
+            locationInGrid.y = Mathf.Clamp(value.y, 0, GridManager.GridSize.y);
         }
     }
     private Vector2 locationInGrid;

@@ -1,35 +1,39 @@
 ﻿using UnityEngine;
+/// <summary>
+/// Klassen behöver köras EN gång (under Main Menu). 
+/// </summary>
 public class Settings : Singleton<Settings>
 {
     protected Settings() { } // guarantee this will be always a singleton only - can't use the constructor!
 
-    public float speed = 0.5f;
+    public float CameraSpeed = 0.5f; 
+    public float EnemySpeed = 10f;
+    public float PlayerSpeed = 8f;
+    public float PlayerTurnSpeed = 8f;
+    public float EnemyTurnSpeed = 8;
+    public float TimeUntilPlayerSpotted = 0.3f;
 
-    //Searchwidth and height for A* pathfinding algorithm
-    public int SearchWidth = 10;
-    public int SearchHeight = 10;
-    public Vector2 TileSize = new Vector2(1, 1);
-    public LayerMask UnpassableLayer;
+    public Vector2 TileSize = new Vector2(1,1);
 
     public string HighScoreFilePath = "HighScore.txt";
 
-    public int Level;
+    public int Level = 1;
 
-    public int Score;
+    public int TotalScore = 0;
+    public int TemporaryScore = 0;
 
-    public int MaxNumberofHighScores;
-
-    void Awake()
+    public int MaxNumberofHighScores = 5;
+    public static Settings settings;
+    protected override void Awake()
     {
         Reload();
+        if (settings == null)
+        {
+            DontDestroyOnLoad(gameObject);
+            settings = this;
+        }
         HighScoreFilePath = Application.persistentDataPath + "/" + HighScoreFilePath;
         // Your initialization code here
-    }
-
-    // (optional) allow runtime registration of global objects
-    static public T RegisterComponent<T>() where T : Component
-    {
-        return Instance.GetOrAddComponent<T>();
     }
 }
 

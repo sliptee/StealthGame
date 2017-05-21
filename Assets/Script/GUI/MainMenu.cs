@@ -9,74 +9,110 @@ using System;
 
 public class MainMenu : MonoBehaviour, iMenu
 {
-    private Vector2 origin;
-    public Text HighScoreText;
-    public GameObject Canvas;
-
+    [SerializeField]
+    private GameObject highScore;
+    public GameObject MenuCanvas;
+    private Text[] hsText;
+    Camera main;
     void Awake()
     {
-        origin = new Vector2(Screen.width / 2, Screen.height / 2);
+        hsText = highScore.GetComponentsInChildren<Text>();
+    }
+    void Start()
+    {
+        main = Camera.main;
     }
     internal void TurnOffMenu()
     {
-        Canvas.SetActive(false);
+        if(main != null)
+            main.enabled = true;
+        MenuCanvas.SetActive(false);
+        Time.timeScale = 1;
     }
     internal void TurnOnMenu()
     {
-        Canvas.SetActive(true);
+        if(main != null)
+            main.enabled = false;
+        MenuCanvas.SetActive(true);
+        Time.timeScale = 0f;
     }
     public void ShowHighScore()
     {
-        foreach (Transform child in Canvas.transform)  //Avaktiverar alla aktiva knappar och aktiverar tillbaka-knappen. 
-        {
-            if (child.tag != "Button")
-                continue;
-            if (child.name == "Return to Menu")
-                child.gameObject.SetActive(true);
-            else
-            child.gameObject.SetActive(false);
-        }
-        HighScoreText.text = "No high scores have yet been recorded";
+        DisableEnable("Return to Menu"); //Aktiverar tillbaka-knappen och avaktivera alla andra
         if (!File.Exists(Settings.Instance.HighScoreFilePath))
+        {
+            hsText[0].text = "No high scores have yet been recorded";
             return;
-        SortedDictionary<int, string> LoadHighScore = LevelManager.LoadHighScore();
-        HighScoreText.gameObject.transform.position = origin;
-        HighScoreText.fontSize = 24; 
+        }
+        else
+            ResetHsText();
+
+        Dictionary<string, int> LoadHighScore = LevelManager.LoadHighScore();
+        var ordered = LoadHighScore.OrderByDescending(x => x.Value);
 
         for (int i = 0; i < LoadHighScore.Count; i++)
         {
-            var hsItem = LoadHighScore.ElementAt(i);
-            HighScoreText.text += "Name: " + hsItem.Key + "       Score: " + hsItem.Value + "\n"; 
+            var hsItem = ordered.ElementAt(i);
+            hsText[0].text += "Name: " + hsItem.Key + "\n";
+
+            hsText[1].text += "Score: " + hsItem.Value + "\n";
         }
+    }
+
+    private void ResetHsText()
+    {
+        hsText[0].text = "";
+        hsText[1].text = "";
     }
     public void ReturnToMenu()
     {
-        HighScoreText.text = "";
-        foreach (Transform child in Canvas.transform)  //Avaktiverar tillbaka-knappen och aktivera alla andra
+        ResetHsText();
+        DisableEnable("Return to Menu"); //Avaktiverar tillbaka-knappen och aktivera alla andra
+    }
+    /// <summary>
+    /// Avaktiverar samtliga knappar utom den med namnet [str]. 
+    /// </summary>
+    private void DisableEnable(string str)
+    {
+        foreach (Transform child in MenuCanvas.transform)  
         {
-            if (child.name == "Return to Menu")
-                child.gameObject.SetActive(false);
-            else
-                child.gameObject.SetActive(true);
+            if (child.tag == "Button")
+                child.gameObject.SetActive(!child.gameObject.activeSelf);             
         }
     }
     public void NewGame()
     {
+        Time.timeScale = 1;
+        //Settings.Instance.TotalScore = 0;
         SceneManager.LoadScene(1);
+    }
+    public void DeleteSaves()
+    {
+        PlayerPrefs.DeleteAll();
+        if (File.Exists(Settings.Instance.HighScoreFilePath))
+            File.Delete(Settings.Instance.HighScoreFilePath);
+        Refresh();
     }
     public void LoadGame()
     {
-        if(PlayerPrefs.GetInt("Level") == 0)
+
+        Settings.Instance.Level = PlayerPrefs.GetInt("Level");
+        if (Settings.Instance.Level == 0)
         {
             Debug.Log("No Saved Games");
-            TurnOffMenu(); //"Hacky" fix för att "Load Game" knappen forsätter vara makrerad när inga sparningar hittas. 
-            TurnOnMenu();
-            return;
+            Refresh();
         }
-        int level = PlayerPrefs.GetInt("Level");
-        SceneManager.LoadScene(level);
-        RenderSettings.ambientLight = Color.white;
-
+        else
+        {
+            Settings.Instance.TotalScore = PlayerPrefs.GetInt("Score");
+            SceneManager.LoadScene(Settings.Instance.Level);
+            Time.timeScale = 1;
+        }
+    }
+    private void Refresh()
+    {
+        TurnOffMenu(); //"Hacky" fix för att knappar forsätter vara makrerade
+        TurnOnMenu();
     }
     public void Exit()
     {

@@ -1,22 +1,19 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 public class AStar : MonoBehaviour
 {
-    private static int searchWidth;
-    private static int searchHeight;
     private GridManager grid;
 
     void Awake()
     {
         grid = GetComponent<GridManager>();
-        searchWidth = Settings.Instance.SearchWidth;
-        searchHeight = Settings.Instance.SearchHeight;
     }
     #region Declarations
     //Håller koll på de nodes som är öppna 
-    List<Node> OpenList = new List<Node>();
+    List<Node> OpenList;
 
     Node startNode;
     Node goalNode;
@@ -26,8 +23,9 @@ public class AStar : MonoBehaviour
     //Simpe A* Pathfinding algorithm
     public List<Vector2> FindPath(Vector3 startPos, Vector3 goalPos)
     {
+        OpenList = new List<Node>();
         OpenList.Clear();
-
+        ResetGrid();
         List<Vector2> path = new List<Vector2>();
         startNode = grid.PositionToNode(startPos);
         goalNode = grid.PositionToNode(goalPos);
@@ -51,6 +49,8 @@ public class AStar : MonoBehaviour
 
     private bool Search(Node currentNode)
     {
+        var temp = OpenList;
+
         currentNode.State = NodeState.Closed;
         if (currentNode != startNode)
             OpenList.Remove(currentNode); //Noden är en del av vägen 
@@ -58,11 +58,19 @@ public class AStar : MonoBehaviour
         OpenList.InsertRange(OpenList.Count, FindAdjecentWalkableNodesCost(currentNode, goalNode.LocationInGrid));
 
         //Ordna listan så att det lägsta f-talet ligger först
-        OpenList.Sort((node1, node2) => node1.F.CompareTo(node2.F));
+        OpenList.Sort((node1, node2) => node2.F.CompareTo(node1.F));
 
-
-        foreach (Node nextNode in OpenList)
+        for (int i = temp.Count-1; i >= 0; i--) //Försäkrar att vi inte försöker nå en bortagen node i listan. 
         {
+            Node nextNode;
+            try
+            {
+                nextNode = OpenList[i];
+            }
+            catch
+            {
+                continue;
+            }
             if (nextNode.LocationInGrid == goalNode.LocationInGrid) //Vi hittade målet. Returnera vägen. 
             {
                 return true;
@@ -72,7 +80,6 @@ public class AStar : MonoBehaviour
                 if (Search(nextNode)) //Rekursion. Söker efter nodes bortom den första 
                     return true;
             }
-
         }
         return false;
     }
@@ -87,8 +94,6 @@ public class AStar : MonoBehaviour
             int x = (int)locNode.LocationInGrid.x;
             int y = (int)locNode.LocationInGrid.y;
 
-            if ((x < 0) || (Mathf.Abs(x) > (searchWidth - 1)) || (y < 0) || (Mathf.Abs(y) > (searchHeight - 1)))
-                continue;
             Node nextNode = grid.grid[x, y];
             if (!nextNode.Walkable)
                 continue;
@@ -156,8 +161,6 @@ public class AStar : MonoBehaviour
         {
             for (int y = -1; y < 2; y++)
             {
-                if (X + x > grid.WorldGridSize.x || y + Y > grid.WorldGridSize.y)
-                    continue; 
                 Node nextNode = grid.grid[X+x, Y+y];
                 if (node.LocationInGrid == nextNode.LocationInGrid)
                     continue;
@@ -187,5 +190,16 @@ public class AStar : MonoBehaviour
             }
         }
         return adjecentNodes;
+    }
+    void ResetGrid() 
+    {
+        for (int i = 0; i < grid.grid.GetLength(0); i++)
+        {
+            for (int j = 0; j < grid.grid.GetLength(1); j++)
+            {
+                grid.grid[i, j].State = NodeState.NotChecked;
+                grid.grid[i, j].Parent = null;
+            }
+        }
     }
 }
